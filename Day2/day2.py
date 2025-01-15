@@ -5,8 +5,6 @@ from day2_input import DAY_2_INPUT
 def main() -> None:
 
     reports = [list(map(int, entry.split())) for entry in DAY_2_INPUT.splitlines()]
-
-    # diffs = [get_diff(report) for report in data]
     safe = [is_safe(report) for report in reports]
     print(f"Day 2 Part 1: {sum(safe)}")
 
