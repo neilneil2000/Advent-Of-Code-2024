@@ -1,5 +1,11 @@
 def main():
     data = open("Day3/day3_input.txt", "r").read()
+    # data = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
+    print(part_1(data))
+    print(part_2(data))
+
+
+def part_1(data):
     total = 0
     while data:
         start = data.find("mul(")
@@ -21,7 +27,20 @@ def main():
         operand_b = int(data[:close])
         data = data[close + 1 :]
         total += operand_a * operand_b
-    print(total)
+    return total
+
+
+def part_2(data):
+    data_parts = data.split("don't()")
+    data_parts[0] = "do()" + data_parts[0]
+    total = 0
+    for part in data_parts:
+        do = part.find("do()")
+        if do < 0:
+            continue
+        total += part_1(part[do + 4 :])
+
+    return total
 
 
 if __name__ == "__main__":
