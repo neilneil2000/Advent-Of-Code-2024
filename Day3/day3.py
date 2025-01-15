@@ -1,33 +1,16 @@
+import re
+
+
 def main():
     data = open("Day3/day3_input.txt", "r").read()
     # data = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
-    print(part_1(data))
-    print(part_2(data))
+    print(f"Day 3 Part 1: {part_1(data)}")
+    print(f"Day 3 Part 1: {part_2(data)}")
 
 
 def part_1(data):
-    total = 0
-    while data:
-        start = data.find("mul(")
-        if start < 0:
-            break
-        data = data[start + 4 :]
-        comma = data.find(",")
-        if not 0 < comma <= 3:
-            continue
-        if not data[:comma].isdigit():
-            continue
-        operand_a = int(data[:comma])
-        data = data[comma + 1 :]
-        close = data.find(")")
-        if not 0 < close <= 3:
-            continue
-        if not data[:close].isdigit():
-            continue
-        operand_b = int(data[:close])
-        data = data[close + 1 :]
-        total += operand_a * operand_b
-    return total
+    pattern = r"mul\((\d{1,3}),(\d{1,3})\)"
+    return sum(int(x) * int(y) for x, y, in re.findall(pattern, data))
 
 
 def part_2(data):
