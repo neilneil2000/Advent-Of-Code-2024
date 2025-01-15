@@ -31,16 +31,9 @@ def part_1(data):
 
 
 def part_2(data):
-    data_parts = data.split("don't()")
-    data_parts[0] = "do()" + data_parts[0]
-    total = 0
-    for part in data_parts:
-        do = part.find("do()")
-        if do < 0:
-            continue
-        total += part_1(part[do + 4 :])
-
-    return total
+    return sum(
+        sum(map(part_1, x.split("do()")[1:])) for x in f"do(){data}".split("don't()")
+    )
 
 
 if __name__ == "__main__":
