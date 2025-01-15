@@ -6,10 +6,10 @@ def word_check(words, check_word="APPLE"):
 def checker(words, check_word="APPLE"):
     l = len(words) - 1
     words_a = list(
-        zip(*["X" * (l - i) + word + "X" * i for i, word in enumerate(words)])
+        zip(*["." * (l - i) + word + "X" * i for i, word in enumerate(words)])
     )
     words_b = list(
-        zip(*["X" * i + word + "X" * (l - i) for i, word in enumerate(words)])
+        zip(*["." * i + word + "X" * (l - i) for i, word in enumerate(words)])
     )
 
     words_c = list(zip(*words))
