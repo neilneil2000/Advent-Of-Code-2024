@@ -22,20 +22,25 @@ class GuardMap:
     def direction(self) -> tuple[int, int]:
         return self.__directions[self.__index]
 
+    def in_bounds(self):
+        x, y = self.__position
+        return 0 <= x < len(self.__layout[1]) and 0 <= y < len(self.__layout)
+
     def solve(self):
-        try:
-            while True:
-                while self.__layout[self.__position[1]][self.__position[0]] != "#":
-                    self.__layout[self.__position[1]][self.__position[0]] = "X"
-                    self.__position = tuple(
-                        map(operator.add, self.__position, self.direction)
-                    )
-                self.__position = tuple(
-                    map(operator.sub, self.__position, self.direction)
-                )
-                self.turn()
-        except IndexError:
-            print("Out of Bounds")
+        while True:
+            while self.__layout[self.__position[1]][self.__position[0]] != "#":
+                self.__layout[self.__position[1]][self.__position[0]] = "X"
+                self.forward()
+                if not self.in_bounds():
+                    return
+            self.backward()
+            self.turn()
 
     def path_length(self):
         return sum(map(lambda x: x.count("X"), self.__layout))
+
+    def forward(self):
+        self.__position = tuple(map(operator.add, self.__position, self.direction))
+
+    def backward(self):
+        self.__position = tuple(map(operator.sub, self.__position, self.direction))

@@ -6,7 +6,7 @@ def main():
     my_map = list(map(list, main_map))
     guard_map = GuardMap(my_map)
     guard_map.solve()
-    print(guard_map.path_length())
+    print(f"Day 6 Part 1: {guard_map.path_length()}")
 
 
 if __name__ == "__main__":
