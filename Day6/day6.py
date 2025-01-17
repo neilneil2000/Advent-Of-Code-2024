@@ -1,5 +1,3 @@
-import operator
-
 from day6_input import main_map
 from guard_map import GuardMap
 
