@@ -35,6 +35,7 @@ class GuardMap:
                     return
             self.backward()
             self.turn()
+            self.lay_trace()
 
     def in_bounds(self):
         "True if __position is in bounds"
@@ -43,7 +44,14 @@ class GuardMap:
 
     def lay_trace(self):
         """Mark current position as visited"""
-        self.__layout[self.__position[1]][self.__position[0]] = "X"
+        if isinstance(self.__layout[self.__position[1]][self.__position[0]], set):
+            self.__layout[self.__position[1]][self.__position[0]].add(
+                self.__arrows[self.__index]
+            )
+        else:
+            self.__layout[self.__position[1]][self.__position[0]] = {
+                self.__arrows[self.__index]
+            }
 
     def is_obstacle(self):
         """Return True if __position is obstacle"""
@@ -51,7 +59,12 @@ class GuardMap:
 
     def path_length(self):
         """Return Number of locations in route"""
-        return sum(map(lambda x: x.count("X"), self.__layout))
+        total = 0
+        for row in self.__layout:
+            for cell in row:
+                if isinstance(cell, set):
+                    total += 1
+        return total
 
     def forward(self):
         """Move Forward one position"""
