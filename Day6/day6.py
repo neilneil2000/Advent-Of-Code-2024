@@ -5,7 +5,7 @@ from guard_map import GuardMap
 def main():
     my_map = list(map(list, main_map))
     guard_map = GuardMap(my_map)
-    guard_map.solve()
+    guard_map.part_1()
     print(f"Day 6 Part 1: {guard_map.path_length()}")
 
 
