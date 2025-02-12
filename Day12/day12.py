@@ -1,11 +1,24 @@
 import operator
-from day12_input import day12_example, day12_input
+from day12_input import day12_example, day12_input, day12_cross
 
 
 def main():
     my_garden = Garden(list(map(list, day12_input)))
     my_garden.populate_regions()
     print(f"Day 12 Part 1: {my_garden.fence_cost()}")
+    print(f"Day 12 Part 2: {my_garden.discount_fence_cost()}")
+
+
+class Fence:
+    def __init__(self, a, b):
+        self.adjacencies = {a, b}
+
+    @property
+    def direction(self):
+        a, b = self.adjacencies
+        if a[0] == b[0]:
+            return "Horizontal"
+        return "Vertical"
 
 
 class Region:
@@ -29,10 +42,143 @@ class Region:
     def fence_cost(self):
         return self.area * self.perimeter
 
+    def discount_cost(self):
+        return self.area * self.count_sides_new()
+
     @staticmethod
     def adjacencies(location):
         directions = {(0, 1), (1, 0), (-1, 0), (0, -1)}
         return {tuple(map(operator.add, location, d)) for d in directions}
+
+    def get_fences(self, location):
+        adj = self.adjacencies(location) - self.region
+        ax, ay = location
+        return {
+            ((min(ax, bx), min(ay, by)), (max(ax, bx), max(ay, by))) for bx, by in adj
+        }
+
+    def get_all_fences(self):
+        fences = set()
+        for location in self.region:
+            new_fences = self.get_fences(location)
+            for a, b in new_fences:
+                bx, by = b
+                if a[0] == bx:
+                    fences.add(((bx, by), (bx + 1, by)))
+                else:
+                    fences.add(((bx, by), (bx, by + 1)))
+        return fences
+
+    def count_sides_new(self):
+        """Return number of sides in polygon(s) represented in a set"""
+        fences = self.get_all_fences()
+        sides = 0
+        first = fences.pop()
+        post_a, post_b = first
+        previous = {(-5, -5), (-10, -10)}
+        while fences:
+            fences.discard((post_a, post_b))
+            connected = {x for x in fences if post_a in x or post_b in x}
+            for a, b in connected.copy():
+                if a in previous or b in previous:
+                    connected.remove((a, b))
+
+            if len(connected) == 0:  # This polygon is complete - start next
+                if self.is_corner(first, (post_a, post_b)):
+                    sides += 1
+                if fences:
+                    previous = {post_a, post_b}
+                    first = fences.pop()
+                    post_a, post_b = first
+                    continue
+                break
+            if len(connected) == 1:
+                # Insert something to count a new side if required
+                new = connected.pop()
+                if self.is_corner(new, (post_a, post_b)):
+                    sides += 1
+                previous = {post_a, post_b}
+                post_a, post_b = new
+                continue
+            for possible in connected:
+                if self.is_corner(possible, (post_a, post_b)):
+                    sides += 1
+                    break
+            previous = {post_a, post_b}
+            post_a, post_b = possible
+        return sides
+
+    def is_corner(self, fence_a, fence_b):
+        """Returns two is fence_a and fence_b make a corner"""
+        x = {fence_a[0][0], fence_a[1][0], fence_b[0][0], fence_b[1][0]}
+        y = {fence_a[0][1], fence_a[1][1], fence_b[0][1], fence_b[1][1]}
+        if len(x) == 1 or len(y) == 1:
+            return False
+        return True
+
+    def count_sides_old2(self):
+        """Return number of sides in polygon(s) represented in a set"""
+        fences = self.get_all_fences()
+        sides = 0
+        a, b = fences.pop()
+        while fences:
+            if a[0] == b[0]:
+                corners = {
+                    ((a[0] - 1, a[1]), a),
+                    (a, (a[0] + 1, a[1])),
+                    ((b[0] - 1, b[1]), b),
+                    (b, (b[0] + 1, b[1])),
+                }
+                straights = {
+                    ((a[0] - 1, a[1]), (b[0] - 1, b[1])),
+                    ((a[0] + 1, a[1]), (b[0] + 1, b[1])),
+                }
+            else:
+                corners = {
+                    ((a[0], a[1] - 1), a),
+                    (a, (a[0], a[1] + 1)),
+                    ((b[0], b[1] - 1), b),
+                    (b, (b[0], b[1] + 1)),
+                }
+                straights = {
+                    ((a[0], a[1] - 1), (b[0], b[1] - 1)),
+                    ((a[0], a[1] + 1), (b[0], b[1] + 1)),
+                }
+            corners &= fences
+            if corners:
+                a, b = corners.pop()
+                fences.remove((a, b))
+                sides += 1
+                continue
+            straights &= fences
+            a, b = straights.pop()
+            fences.remove((a, b))
+        return sides
+
+    def count_sides_old(self):
+        """Return number of sides in polygon"""
+        fences = self.get_all_fences()
+        sides = 0
+        while fences:
+            a, b = fences.pop()
+            # add and subtract 1 to element that is the same
+            if a[0] == b[0]:
+                possibles = {
+                    ((a[0] - 1, a[1]), (b[0] - 1, b[1])),
+                    ((a[0] + 1, a[1]), (b[0] + 1, b[1])),
+                }
+            else:
+                possibles = {
+                    ((a[0], a[1] - 1), (b[0], b[1] - 1)),
+                    ((a[0], a[1] + 1), (b[0], b[1] + 1)),
+                }
+            possibles &= fences
+            if len(possibles) == 0:
+                # Side Complete - Add to sides
+                sides += 1
+            if len(possibles) == 2:
+                fences.add((a, b))
+        return sides
 
 
 class Garden:
@@ -72,6 +218,9 @@ class Garden:
 
     def fence_cost(self):
         return sum(r.fence_cost for r in self.regions)
+
+    def discount_fence_cost(self):
+        return sum(r.discount_cost() for r in self.regions)
 
 
 if __name__ == "__main__":
