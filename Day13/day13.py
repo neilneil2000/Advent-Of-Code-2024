@@ -33,9 +33,24 @@ def get_cost(a, b, prize):
     return 0
 
 
-def process_file(file_name):
+def solve_sim_equations(a, b, prize):
+    x = zip(a, b, prize)
+    # for entry in x:
+    # print(entry)
+    # b = (lk -in)/(im-lj)
+    y = (a[0] * prize[1] - a[1] * prize[0]) / (a[0] * b[1] - a[1] * b[0])
+    x = (prize[0] - b[0] * y) / a[0]
+    return x, y
+
+
+def are_parallel(x, y):
+    """Return true if two lines are parallel"""
+    return x[0] / x[1] == y[0] / y[1]
+
+
+def process_file(input_string: str) -> list[tuple[int]]:
     entries = []
-    for entry in file_name:
+    for entry in input_string:
         new = []
         for line in entry.splitlines():
             _, line = line.split(":")
@@ -51,21 +66,19 @@ def process_file(file_name):
 
 def main():
     entries = process_file(day13_input)
-    for entry in day13_example:
-        new = []
-        for line in entry.splitlines():
-            _, line = line.split(":")
-            a, b = line.split(",")
-            a = a.replace("=", "+")
-            b = b.replace("=", "+")
-            _, a = a.split("+")
-            _, b = b.split("+")
-            new.append((int(a), int(b)))
-        entries.append(tuple(new))
-    print(len(entries))
-    print(entries[0])
-    print(*entries[0])
-    print(sum(get_cost(*entry) for entry in entries))
+    # entries = [((94, 34), (22, 67), (8400, 5400))]
+    print(sum(are_parallel(x[0], x[1]) for x in entries))
+    total = 0
+    for entry in entries:
+        # print(are_parallel(entry[0], entry[1]))
+        x, y = solve_sim_equations(*entry)
+        if x.is_integer() and y.is_integer():
+            print(f"Solution Found. x={x} y={y} Tokens = {3*x+y}")
+            total += 3 * x + y
+        # print(result)
+    print(total)
+
+    # print(sum(get_cost(*entry) for entry in entries))
 
 
 if __name__ == "__main__":
