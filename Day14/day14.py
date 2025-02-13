@@ -2,6 +2,8 @@ from day14_input import day14_example, day14_input
 
 
 def movement(dimensions, steps):
+    """Return function which moves a number of steps"""
+
     def mover(p, v):
         return (p[0] + steps * v[0]) % dimensions[0], (
             p[1] + steps * v[1]
@@ -11,16 +13,13 @@ def movement(dimensions, steps):
 
 
 def process_inputs(inputs):
+    """Process Input Text"""
     processed = []
     for entry in inputs:
         p, v = entry.split()
-        _, p = p.split("=")
-        p = p.split(",")
-        p = tuple(map(int, p))
-        _, v = v.split("=")
-        v = v.split(",")
-        v = tuple(map(int, v))
-        processed.append((p, v))
+        p = p.split("=")[1].split(",")
+        v = v.split("=")[1].split(",")
+        processed.append((tuple(map(int, p)), tuple(map(int, v))))
     return processed
 
 
@@ -47,11 +46,9 @@ def main():
 
     robots = process_inputs(day14_input)
     mover = movement(dimensions, steps)
-    positions = []
-    for p, v in robots:
-        positions.append(mover(p, v))
-    ans = safety_factor(positions, dimensions)
-    print(ans)
+
+    ans = safety_factor((mover(*robot) for robot in robots), dimensions)
+    print(f"Day 14 Part 1: {ans}")
 
 
 if __name__ == "__main__":
