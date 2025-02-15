@@ -41,34 +41,6 @@ class Maze:
     def right(cls, direction):
         return cls.DIRECTIONS[(cls.DIRECTIONS.index(direction) + 1) % 4]
 
-    def depth_first(self, location, direction, score):
-        if location[-1] == self.end:
-            return score
-        forward = self.forward(location[-1], direction[-1])
-        scores = set()
-        previous = list(zip(location, direction))
-        if forward not in self.walls:
-            scores &= self.depth_first(
-                location + [forward],
-                direction + [direction[-1]],
-                score + self.FWD_SCORE,
-            )
-
-        if (location, left := self.left(direction)) not in previous:
-            scores &= self.depth_first(
-                location + [location[-1]],
-                direction + [left],
-                score + self.TURN_SCORE,
-            )
-
-        if (location, right := self.right(direction)) not in previous:
-            scores &= self.depth_first(
-                location + [location[-1]],
-                direction + [right],
-                score + self.TURN_SCORE,
-            )
-        return min(scores)
-
     def breadth_first(self, vectors: list, scores: list):
         new_vectors = []
         new_scores = []
