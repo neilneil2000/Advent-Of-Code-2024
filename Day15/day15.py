@@ -97,7 +97,6 @@ def ok_to_continue(boxes, pointers, walls):
 
 def increment_pointers(pointers, vector):
     return set(tuple_add(pointer, vector) for pointer in pointers)
-    return set((tuple_add(l, vector), tuple_add(r, vector)) for l, r in pointers)
 
 
 def get_boxes_within_pointers(pointers, boxes):
@@ -140,24 +139,17 @@ def part_2(directions, walls, boxes: set, robot: tuple):
         else:
             pointer = {tuple_add(pointer, vector)}
             while ok_to_continue(boxes, pointer, walls):
-                # find box with pointer in it and add to set of pointers
                 new_boxes = get_boxes_within_pointers(pointer, boxes)
                 moving_boxes |= new_boxes
-                new_pointer = set()
-                for l, r in new_boxes:
-                    new_pointer |= {l, r}
-
+                new_pointer = {location for box in new_boxes for location in box}
                 pointer = increment_pointers(new_pointer, vector)
             if is_wall_within_pointers(pointer, walls):
                 continue
             robot = tuple_add(robot, vector)
             boxes -= moving_boxes
-            for left, right in moving_boxes:
-                boxes.add((tuple_add(left, vector), tuple_add(right, vector)))
-
-            # while not at a wall:
-            # add impacted boxes to moxing_boxes
-            # step forward and expand pointer list to cover all boxes
+            boxes |= {
+                (tuple_add(l, vector), tuple_add(r, vector)) for l, r in moving_boxes
+            }
 
     return gps_wide(boxes)
 
@@ -167,11 +159,9 @@ def main():
     layout, directions = day15_input
 
     walls, robot, boxes = parse_map(layout)
-    # display(boxes, robot, walls, len(layout.splitlines()[0]), len(layout.splitlines()))
     print(f"Day 15 Part 1: {part_1(directions, walls, boxes, robot)}")
 
     walls, robot, boxes = parse_map_wide(layout)
-
     print(f"Day 15 Part 2: {part_2(directions, walls, boxes, robot)}")
 
 
