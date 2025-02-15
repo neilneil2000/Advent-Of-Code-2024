@@ -1,4 +1,5 @@
 import operator
+import math
 
 from day16_input import day16_input, day16_example, day16_example2
 
@@ -71,9 +72,7 @@ class Maze:
         self.breadth_first([(self.start, self.initial_direction)], [0])
 
     def get_lowest_score(self):
-        return min(
-            self.best.get((self.end, d), 99999999999999999) for d in self.DIRECTIONS
-        )
+        return min(self.best.get((self.end, d), math.inf) for d in self.DIRECTIONS)
 
 
 def main():
