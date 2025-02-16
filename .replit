@@ -1,8 +1,9 @@
-run = ' Day16\day16.py'
+
+run = 'Day16/day16.py'
 modules = ["python-3.11"]
 
 [deployment]
-run = ["sh", "-c", ' Day16\day16.py']
+run = ["sh", "-c", 'Day16/day16.py']
 
 [workflows]
 runButton = "Run"
