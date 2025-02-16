@@ -85,4 +85,6 @@ def main():
 
 
 if __name__ == "__main__":
+    print("Day 16")
     main()
+    
