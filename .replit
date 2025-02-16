@@ -14,4 +14,4 @@ author = 18989955
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python ./Day16/day16.py"
+args = "python Day16/day16.py"
