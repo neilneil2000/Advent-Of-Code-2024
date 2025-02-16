@@ -1,10 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class Node:
   value:object
   parent:'Node'=None
-  children:list['Node'] =[]
+  children:list['Node'] = field(default_factory=list)
 
 class Tree:
   def __init__(self, root:object, value):
