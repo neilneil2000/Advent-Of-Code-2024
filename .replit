@@ -1,0 +1,16 @@
+run = ' Day16\day16.py'
+modules = ["python-3.11"]
+
+[deployment]
+run = ["sh", "-c", ' Day16\day16.py']
+
+[workflows]
+runButton = "Run"
+
+[[workflows.workflow]]
+name = "Run"
+author = 18989955
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python ./Day16/day16.py"

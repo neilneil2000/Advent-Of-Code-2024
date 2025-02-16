@@ -3,6 +3,8 @@ import math
 
 from day16_input import day16_input, day16_example, day16_example2
 
+from Tree import Tree
+
 
 class Maze:
 
