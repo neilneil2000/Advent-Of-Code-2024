@@ -5,6 +5,16 @@ from day16_input import day16_input, day16_example, day16_example2
 
 from Tree import Tree
 
+from collections import defaultdict, namedtuple
+from dataclasses import dataclass, field
+
+
+@dataclass
+class NeilNode:
+    score: int = math.inf
+    children: set = field(default_factory=set)
+    parents: set = field(default_factory=set)
+
 
 class Maze:
 
@@ -21,7 +31,8 @@ class Maze:
         self.walls = set()
         self.process_layout()
         self.best = {}
-        self.path_locations=set()
+        self.paths = {}
+        self.tree = defaultdict(lambda: NeilNode())
 
     def process_layout(self):
         for y, row in enumerate(self.layout):
@@ -45,83 +56,121 @@ class Maze:
     def right(cls, direction):
         return cls.DIRECTIONS[(cls.DIRECTIONS.index(direction) + 1) % 4]
 
-    def breadth_first(self, vectors: list, scores: list):
-        new_vectors = []
+    def breadth_first_paths(self, currents: list, paths: list, scores: list):
+        new_paths = []
         new_scores = []
-        for vector, score in zip(vectors, scores):
-            if vector[0] in self.walls or (
-                vector in self.best and score >= self.best[vector]
-            ):
+        new_currents = []
+        for current, path, score in zip(currents, paths, scores):
+            location, direction = current
+            if location in self.walls:
                 continue
-            self.best[vector] = score
-            location, direction = vector
+            if current in self.best:
+                if score > self.best[current]:
+                    continue
+                elif score == self.best[current]:
+                    self.paths[current] |= path
+
+            self.paths[current] = {location} | path
+            self.best[current] = score
             if location == self.end:
                 continue
-            new_vectors += [
+            if score >= self.get_lowest_score():
+                continue
+
+            new_currents += [
                 (self.forward(location, direction), direction),
                 (location, self.left(direction)),
                 (location, self.right(direction)),
             ]
+            new_paths += [self.paths[current], self.paths[current], self.paths[current]]
             new_scores += [
                 score + self.FWD_SCORE,
                 score + self.TURN_SCORE,
                 score + self.TURN_SCORE,
             ]
-        if new_vectors:
-            self.breadth_first(new_vectors, new_scores)
+        if new_currents:
+            self.breadth_first_paths(new_currents, new_paths, new_scores)
 
-    def breadth_first_paths(self, paths: list, scores: list):
-        new_paths = []
-        new_scores = []
-        for path, score in zip(paths, scores):
-            current = path[-1]
-            location, direction = current
-            if location == self.end:
-                locs={pos for pos,_ in path}
-                if self.end not in self.best or score<self.best[self.end]:
-                    self.path_locations =locs
-                    self.best[self.end] = score
-                elif score== self.best[self.end]:
-                    self.path_locations |= locs
-                continue
-            if current[0] in self.walls or (
-                current in self.best and score > self.best[current]
-            ):
-                
-                continue
-            self.best[current] = score
-            
-            
-            new_paths += [path+ [(self.forward(location, direction), direction)],path+[(location, self.left(direction))],path+  [(location, self.right(direction))]]
-            new_scores += [
-                score + self.FWD_SCORE,
-                score + self.TURN_SCORE,
-                score + self.TURN_SCORE,
-            ]
-        if new_paths:
-            self.breadth_first_paths(new_paths, new_scores)
+    def breadth_first_paths_2(self, vectors: list):
+        next_vectors = []
+        for l, d in vectors:
+            score = self.tree[(l, d)].score
+            possibles = {
+                (self.forward(l, d), d, score + self.FWD_SCORE),
+                (l, self.left(d), score + self.TURN_SCORE),
+                (l, self.right(d), score + self.TURN_SCORE),
+            }
+            for new_l, new_d, new_score in possibles:
+                if new_l in self.walls:
+                    continue
+                if (new_l, new_d) in self.tree[(l, d)].parents:
+                    continue
+                current_score = self.tree[(new_l, new_d)].score
+                if new_score > current_score:
+                    continue
+                if new_score < current_score:
+                    score_diff = current_score - new_score
+                    self.tree[(new_l, new_d)].score = new_score
+                    for child in self.tree[(new_l, new_d)].children:
+                        self.subtract_to_leaf(child, score_diff)
+                self.tree[(new_l, new_d)].parents.add((l, d))
+                self.tree[(l, d)].children.add((new_l, new_d))
+                if self.end == (new_l, new_d):
+                    continue
+                next_vectors.append((new_l, new_d))
 
-        
+        if next_vectors:
+            self.breadth_first_paths_2(next_vectors)
+
+    def subtract_to_leaf(self, start_node: NeilNode, subtraction: int):
+        if not self.tree[start_node].children:
+            self.tree[start_node].score -= subtraction
+            return
+        for child in self.tree[start_node].children:
+            self.subtract_to_leaf(child, subtraction)
 
     def go_breadth(self):
         self.best = {}
-        self.breadth_first_paths([[(self.start, self.initial_direction)]], [0])
+        self.breadth_first_paths(
+            [(self.start, self.initial_direction)], [{self.start}], [0]
+        )
+
+    def go_breadth_2(self):
+        self.tree[(self.start, self.initial_direction)] = NeilNode(score=0)
+        self.breadth_first_paths_2([(self.start, self.initial_direction)])
 
     def get_lowest_score(self):
-        return min(self.best.get((self.end, d), math.inf) for d in self.DIRECTIONS)
+        return min(self.tree[(self.end, d)].score for d in self.DIRECTIONS)
+        # return self.best[self.end]
+
+    def get_number_of_seats(self):
+        # There could be more than one direction on final node
+        nodes = {(self.tree[(self.end, d)] for d in self.DIRECTIONS)}
+        lowest_score = self.get_lowest_score()
+        for node in nodes.copy():
+            if node.score != lowest_score:
+                nodes.remove(node)
+        all_nodes = set()
+        for node in nodes:
+            all_nodes |= node
+            all_nodes |= self.get_parents(node)
+        location = {for node in all_nodes}
+
+    def get_parents(self, node):
+        parents = set()
+        for parent in self.tree[node].parents:
+            parents |= {parent}
+            parents |= self.get_parents(parent)
+        return parents
 
 
 def main():
-    reindeerMaze = Maze(day16_input, ">")
-    reindeerMaze.go_breadth()
-    #ans = reindeerMaze.get_lowest_score()
-    ans = reindeerMaze.best[reindeerMaze.end]
-    print(f"Day 16 Part 1: {ans}")
-    
-    print(f"Day 16 Part 2: {len(reindeerMaze.path_locations)}")
+    reindeer_maze = Maze(day16_example, ">")
+    reindeer_maze.go_breadth_2()
+    print(f"Day 16 Part 1: {reindeer_maze.get_lowest_score()}")
+    print(f"Day 16 Part 2: {reindeer_maze.get_number_of_seats()}")
 
 
 if __name__ == "__main__":
     print("Day 16")
     main()
-    
