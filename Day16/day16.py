@@ -21,6 +21,7 @@ class Maze:
         self.walls = set()
         self.process_layout()
         self.best = {}
+        self.path_locations=set()
 
     def process_layout(self):
         for y, row in enumerate(self.layout):
@@ -69,9 +70,42 @@ class Maze:
         if new_vectors:
             self.breadth_first(new_vectors, new_scores)
 
+    def breadth_first_paths(self, paths: list, scores: list):
+        new_paths = []
+        new_scores = []
+        for path, score in zip(paths, scores):
+            current = path[-1]
+            location, direction = current
+            if location == self.end:
+                locs={pos for pos,_ in path}
+                if self.end not in self.best or score<self.best[self.end]:
+                    self.path_locations =locs
+                    self.best[self.end] = score
+                elif score== self.best[self.end]:
+                    self.path_locations |= locs
+                continue
+            if current[0] in self.walls or (
+                current in self.best and score > self.best[current]
+            ):
+                
+                continue
+            self.best[current] = score
+            
+            
+            new_paths += [path+ [(self.forward(location, direction), direction)],path+[(location, self.left(direction))],path+  [(location, self.right(direction))]]
+            new_scores += [
+                score + self.FWD_SCORE,
+                score + self.TURN_SCORE,
+                score + self.TURN_SCORE,
+            ]
+        if new_paths:
+            self.breadth_first_paths(new_paths, new_scores)
+
+        
+
     def go_breadth(self):
         self.best = {}
-        self.breadth_first([(self.start, self.initial_direction)], [0])
+        self.breadth_first_paths([[(self.start, self.initial_direction)]], [0])
 
     def get_lowest_score(self):
         return min(self.best.get((self.end, d), math.inf) for d in self.DIRECTIONS)
@@ -80,8 +114,11 @@ class Maze:
 def main():
     reindeerMaze = Maze(day16_input, ">")
     reindeerMaze.go_breadth()
-    ans = reindeerMaze.get_lowest_score()
+    #ans = reindeerMaze.get_lowest_score()
+    ans = reindeerMaze.best[reindeerMaze.end]
     print(f"Day 16 Part 1: {ans}")
+    
+    print(f"Day 16 Part 2: {len(reindeerMaze.path_locations)}")
 
 
 if __name__ == "__main__":
