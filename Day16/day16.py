@@ -122,6 +122,29 @@ class Maze:
         if next_vectors:
             self.breadth_first_paths_2(next_vectors)
 
+    def prune(self):
+        """Remove all nodes that dont lead to final leaf"""
+        key_list = list(self.tree.keys())
+        for key in key_list:
+
+            if key[0]==self.end:
+                print(f"End Leaf:{key}")
+                print(self.tree[key])
+                continue
+            if self.tree[key].children:
+                continue
+            else:
+                #print("Pruning", key)
+                self.prune_node(key)
+
+    def prune_node(self, location):
+        if self.tree[location].children:
+            return
+        for parent in self.tree[location].parents:
+            self.tree[parent].children.remove(location)
+            self.prune_node(parent)
+        del self.tree[location]
+
     def subtract_to_leaf(self, start_node: NeilNode, subtraction: int):
         if not self.tree[start_node].children:
             self.tree[start_node].score -= subtraction
@@ -153,7 +176,7 @@ class Maze:
         all_nodes = {self.end}
         for node in nodes:
             all_nodes |= self.get_parent_locations(node)
-            print(all_nodes)
+            self.display(all_nodes)
         return len(all_nodes)
 
     def get_parent_locations(self, node):
@@ -163,11 +186,22 @@ class Maze:
             parents |= self.get_parent_locations(self.tree[parent])
         return parents
 
+    def display(self, path_values):
+        for y, row in enumerate(self.layout):
+            for x, char in enumerate(row):
+                if (x,y) in path_values:
+                    print("O", end="")
+                else:
+                    print(char, end="")
+            print()
+
 
 def main():
     reindeer_maze = Maze(day16_example, ">")
     reindeer_maze.go_breadth_2()
     print(f"Day 16 Part 1: {reindeer_maze.get_lowest_score()}")
+    print(reindeer_maze.tree[((13,1),"^")])
+    reindeer_maze.prune()
     print(f"Day 16 Part 2: {reindeer_maze.get_number_of_seats()}")
 
 
