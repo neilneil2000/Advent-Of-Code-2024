@@ -145,22 +145,22 @@ class Maze:
 
     def get_number_of_seats(self):
         # There could be more than one direction on final node
-        nodes = {(self.tree[(self.end, d)] for d in self.DIRECTIONS)}
+        nodes = [self.tree[(self.end, d)] for d in self.DIRECTIONS]
         lowest_score = self.get_lowest_score()
         for node in nodes.copy():
             if node.score != lowest_score:
                 nodes.remove(node)
-        all_nodes = set()
+        all_nodes = {self.end}
         for node in nodes:
-            all_nodes |= node
-            all_nodes |= self.get_parents(node)
-        location = {for node in all_nodes}
+            all_nodes |= self.get_parent_locations(node)
+            print(all_nodes)
+        return len(all_nodes)
 
-    def get_parents(self, node):
+    def get_parent_locations(self, node):
         parents = set()
-        for parent in self.tree[node].parents:
-            parents |= {parent}
-            parents |= self.get_parents(parent)
+        for parent in node.parents:
+            parents |= {parent[0]}
+            parents |= self.get_parent_locations(self.tree[parent])
         return parents
 
 
