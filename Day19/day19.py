@@ -1,60 +1,26 @@
-import re
-
-designs = "r, wr, b, g, bwu, rb, gb, br".split(", ")
-
-towels="""brwrr
-bggr
-gbbr
-rrbgbr
-ubwu
-bwurrg
-brgr
-bbrgwb""".splitlines()
-
 from day19_input import designs, towels
 
-def segment_possible(towel_segment,depth=0):
-  """Return true if segment can be made from designs"""
-  if towel_segment in designs:
-    return True
-  for x in range(1,len(towel_segment)):
-    if segment_possible(towel_segment[:-x],depth+1) and segment_possible(towel_segment[-x:],depth+1):
-      return True
-  return False
+# from day19_input import designs_example as designs
+# from day19_input import towels_example as towels
 
-towel=towels[0]
-#print(towel)
-result={design:[m.start() for m in re.finditer(f'(?={design})', towel)] for design in designs}
-#print(result)
 
-#print(result)
+def chop_towel(towel, max_len):
+    """Return list of towel segments if a split is possible"""
+    for x in range(max_len, 0, -1):
+        if towel[:x] not in designs:
+            continue
+        if not towel[x:]:
+            return [towel[:x]]
+        if next_segment := chop_towel(towel[x:], max_len):
+            return [towel[:x]] + next_segment
+    return []
 
-#for towel in [towels[0]]:
-  #print(f"Towel: {towel} - Possible: {segment_possible(towel)}")
-#print(sum(segment_possible(towel) for towel in towels))
-from collections import defaultdict
-towel_dict=defaultdict(list)
-max_len=max(len(design) for design in designs)
-print(max_len)
-def segment_check(towel_segment):
-  print(f'Checking {towel_segment}')
-  for i in range(len(towel_segment)):
-    for j in range(max_len+1,0,-1):
-      if towel_segment[i:i+j] in designs:
-        towel_dict[i].append(j)
 
-segment_check(towels[0])
-print(towel_dict)
-pointer=0
+def main():
+    max_len = max(len(design) for design in designs)
+    counter = sum(chop_towel(towel, max_len) != [] for towel in towels)
+    print(f"Day 19 Part 1: {counter}")
 
-def possible(pointer,target):
-  for step in towel_dict[pointer]:
-    if pointer+step==target:
-      return True
-    if not towel_dict[pointer+step]:
-      continue
-    return possible(pointer+step,target)
-        
-  return False
 
-print(possible(0,len(towels[0])))
+if __name__ == "__main__":
+    main()
