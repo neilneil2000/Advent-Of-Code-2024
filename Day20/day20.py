@@ -1,4 +1,3 @@
-import math
 from collections import defaultdict
 
 from day20_input import day20_input, day20_example
@@ -44,73 +43,19 @@ class Racer:
                 raise ValueError("Too many neighbours")
             location = location.pop()
 
-    def _get_neighbours(self, location):
+    def _get_neighbours(self, location: tuple[int, int]) -> set[tuple[int, int]]:
+        """Return all neighbours of a given location"""
         x, y = location
         return {(x, y + 1), (x, y - 1), (x + 1, y), (x - 1, y)}
 
     def find_simple_cheats(self):
+        """Return all cheats that are a single step through a wall"""
         for wall in self.walls:
             if score := self.calc_cheat_scores_through_wall(wall):
                 self.cheats[score].add(wall)
 
-    def find_long_cheats(self, cheat_length):
-        solutions = set()
-        for track in list(self.costs.keys()):
-            result = self.breadth_first(track, cheat_length)
-            for key in result.keys():
-                saving = abs(self.costs[track] - self.costs[key]) - 2
-                if saving > 0:
-                    self.long_cheats[saving] += 1
-        pass
-        return sum(x for x in self.long_cheats)
-
-    def depth_first(self, path, max_depth) -> set:
-        solutions = set()
-        # self.display(path)
-        if len(path) > max_depth:
-            return solutions
-        here = path[-1]
-        for neighbour in self._get_neighbours(here):
-            if neighbour in path:
-                continue
-            if neighbour in self.track:
-                solutions.add((path[0], neighbour))
-                continue
-            if neighbour in self.walls:
-                solutions |= self.depth_first(path + [neighbour], max_depth)
-        return solutions
-
-    def breadth_first(
-        self,
-        frontier,
-        max_score,
-        scores=None,
-        current_score=0,
-    ):
-        if scores is None:
-            scores = defaultdict(lambda: math.inf)
-        if not isinstance(frontier, set):
-            frontier = {frontier}
-        # self.display(scores, frontier)
-        new_frontier = set()
-        for location in frontier:
-            if current_score < scores[location]:
-                scores[location] = current_score
-                if location in self.track and current_score > 0:
-                    continue
-                new_frontier |= self._get_neighbours(location)
-                scores[location] = current_score
-        new_frontier -= frontier
-        new_frontier -= self.track
-        new_frontier.discard(self.start)
-        new_frontier.discard(self.end)
-        if current_score < max_score:
-            scores |= self.breadth_first(
-                new_frontier, max_score, scores, current_score + 1
-            )
-        return scores
-
-    def calc_cheat_scores_through_wall(self, wall):
+    def calc_cheat_scores_through_wall(self, wall: tuple[int, int]) -> int:
+        """Return score of passing through wall"""
         track = list(self._get_neighbours(wall) & self.track)
         if len(track) > 3:
             raise ValueError(f"Found Wall with too many track elements: {wall}")
@@ -130,32 +75,51 @@ class Racer:
         """Return number of cheats >=x"""
         return sum(len(values) for key, values in self.cheats.items() if key >= x)
 
-    def display(self, scores, frontier):
-        for y in range(15):
-            for x in range(15):
-                char = "."
-                if (x, y) in scores:
-                    char = scores[(x, y)]
-                elif (x, y) in frontier:
-                    char = "?"
-                elif (x, y) in self.walls:
-                    char = "#"
-                elif (x, y) == self.start:
-                    char = "S"
-                elif (x, y) == self.end:
-                    char = "E"
-                print(char, end="")
-            print()
-        print()
+    def manhattan_distance(self, start: tuple[int, int], end: tuple[int, int]) -> int:
+        """Return Manhattan distance between two x,y coordinates"""
+        return abs(start[0] - end[0]) + abs(start[1] - end[1])
+
+    def get_long_cheats(self, min_cheat: int) -> dict:
+        """Create Dictionary of All Cheats of at least length min_cheat"""
+        all_cheats = {}
+        for location in self.track:
+            all_cheats |= self.find_cheats_from_here(location, min_cheat)
+        return all_cheats
+
+    def find_cheats_from_here(self, start: tuple[int, int], min_cheat: int) -> dict:
+        """Build Dictionary of all cheats from start location that are of at least length min_cheat"""
+        cheats = {}
+        for location in self.track:
+            dist = self.manhattan_distance(start, location)
+            if dist > min_cheat:
+                continue
+            benefit = (self.costs[(location)] - self.costs[(start)]) - dist
+            if benefit > 0:
+                cheats[(start, location)] = benefit
+        return cheats
+
+    def summarise_cheats(self, cheats: dict) -> dict:
+        """Create Summary of cheat dictionary"""
+        summary = defaultdict(int)
+        for v in cheats.values():
+            summary[v] += 1
+        return summary
+
+    def count_cheats_over(self, cheat_summary: dict, cheat_target: int) -> int:
+        """Return number of cheats over a certain value"""
+        return sum(value for key, value in cheat_summary.items() if key >= cheat_target)
 
 
 def main():
-    racetrack = Racer(day20_example)
+    racetrack = Racer(day20_input)
+    cheat_target = 100
     racetrack.find_simple_cheats()
-    print(f"Day 20 Part 1: {racetrack.cheats_over_x(100)}")
+    print(f"Day 20 Part 1: {racetrack.cheats_over_x(cheat_target)}")
 
     cheat_length = 20
-    ans = racetrack.find_long_cheats(cheat_length)
+    cheats = racetrack.get_long_cheats(cheat_length)
+    summary = racetrack.summarise_cheats(cheats)
+    ans = racetrack.count_cheats_over(summary, cheat_target)
     print(f"Day 20 Part 2: {ans}")
 
 
